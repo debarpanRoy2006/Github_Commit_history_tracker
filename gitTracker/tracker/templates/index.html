@@ -1,0 +1,990 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GitHub Commit Tracker</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+/* Reset & base */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  overflow-x: hidden;
+  color: #212529;
+}
+
+/* Navbar */
+.navbar {
+  background-color: #212529 !important;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  z-index: 1040;
+}
+
+/* Sidebar */
+#sidebar {
+  width: 250px;
+  height: 100vh;
+  position: fixed;
+  top: 56px; /* height of navbar */
+  left: 0;
+  background-color: #343a40;
+  color: #fff;
+  padding-top: 1rem;
+  transition: margin-left 0.3s ease;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.15);
+  z-index: 1030;
+  overflow-y: auto;
+}
+
+/* Sidebar collapsed state */
+#sidebar.collapsed {
+  margin-left: -250px;
+}
+
+/* Sidebar navigation */
+#sidebar ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0;
+}
+
+#sidebar ul li {
+  border-bottom: 1px solid #495057;
+}
+
+#sidebar ul li a {
+  display: block;
+  color: #dee2e6;
+  padding: 12px 20px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+#sidebar ul li a:hover,
+#sidebar ul li a.active {
+  background-color: #495057;
+  color: #fff;
+  text-decoration: none;
+}
+
+/* Content */
+#content {
+  margin-left: 250px;
+  padding: 2rem 2.5rem;
+  min-height: 100vh;
+  background-color: #fff;
+  transition: margin-left 0.3s ease;
+  box-shadow: inset 0 0 15px #f0f0f0;
+}
+
+/* Content expanded (sidebar hidden) */
+#content.expanded {
+  margin-left: 0;
+}
+
+/* Buttons */
+button#sidebarToggle {
+  font-size: 1.5rem;
+  padding: 6px 12px;
+  border: 2px solid #fff;
+  border-radius: 5px;
+  background-color: transparent;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+button#sidebarToggle:hover {
+  background-color: #495057;
+  color: #fff;
+}
+
+/* Avatars */
+img.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 15px;
+  object-fit: cover;
+  border: 2px solid #6c757d;
+  transition: border-color 0.2s ease;
+}
+
+img.avatar:hover {
+  border-color: #0d6efd;
+}
+
+.profile-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #0d6efd;
+  margin-bottom: 1rem;
+}
+
+/* Form styling */
+form input[type="text"],
+form input[type="date"],
+form select,
+form button {
+  border-radius: 5px !important;
+  font-size: 1rem !important;
+}
+
+/* Footer */
+footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background-color: #212529;
+  color: #adb5bd;
+  text-align: center;
+  padding: 10px 0;
+  font-size: 14px;
+  z-index: 1030;
+  box-shadow: 0 -2px 6px rgba(0,0,0,0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  #sidebar {
+    margin-left: -250px;
+    box-shadow: none;
+    background-color: #212529;
+  }
+  #sidebar.collapsed {
+    margin-left: 0;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.3);
+  }
+  #content {
+    margin-left: 0;
+    padding: 1rem 1.5rem;
+  }
+  #content.expanded {
+    margin-left: 250px;
+  }
+  button#sidebarToggle {
+    font-size: 1.3rem;
+    padding: 5px 10px;
+  }
+}
+
+/* Smaller devices */
+@media (max-width: 480px) {
+  h2 {
+    font-size: 1.4rem;
+  }
+  form input[type="text"],
+  form input[type="date"],
+  form select,
+  form button {
+    font-size: 0.95rem !important;
+  }
+  button#sidebarToggle {
+    font-size: 1.1rem;
+    padding: 4px 8px;
+  }
+}
+.tech-stack-section {
+  padding: 4rem 0;
+  background: linear-gradient(to bottom, #ffffff, #f8f9fa);
+}
+
+.section-heading {
+  font-size: 2.2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: #212529;
+}
+
+.section-subheading {
+  text-align: center;
+  color: #6c757d;
+  margin-bottom: 3rem;
+  font-size: 1.1rem;
+}
+
+.tech-stack-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.tech-category {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+  transition: transform 0.3s ease;
+}
+
+.tech-category:hover {
+  transform: translateY(-5px);
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid #eee;
+}
+
+.category-header i {
+  font-size: 1.5rem;
+  color: #0d6efd;
+}
+
+.category-header h3 {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #343a40;
+}
+
+.tech-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tech-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem;
+  border-radius: 8px;
+  transition: background-color 0.2s ease;
+}
+
+.tech-item:hover {
+  background-color: #f8f9fa;
+}
+
+.tech-icon {
+  width: 50px;
+  height: 50px;
+  background: white;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  flex-shrink: 0;
+}
+
+.tech-icon img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+}
+
+.tech-info h4 {
+  margin: 0 0 0.2rem 0;
+  font-size: 1rem;
+  color: #212529;
+}
+
+.tech-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+
+
+@media (max-width: 768px) {
+  .tech-stack-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+  </style>
+</head>
+<body>
+ <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+      <button class="btn btn-outline-light me-3" id="sidebarToggle">☰</button>
+      <a class="navbar-brand" href="#">GitHub Commit Tracker</a>
+    </div>
+  </nav>
+ 
+
+
+
+  <div id="sidebar">
+    <ul>
+      <li><a href="#" id="dashboardLink" class="active">Dashboard</a></li>
+      <li><a href="#" id="profileLink">Profile</a></li>
+      <li><a href="#" id="repositoriesLink">Repositories</a></li>
+      <li><a href="#" id="settingsLink">Settings</a></li>
+      <li><a href="#" id="aboutLink">About</a></li>
+      <li><a href="#" id="helpLink">Help</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+    <br><br>
+    <div id="dashboardContent">
+      <h2>GitHub Commit Tracker</h2>
+      <form id="commitForm" class="mb-3">
+        <input type="text" id="username" placeholder="GitHub Username" class="form-control mb-2" required />
+        <input type="text" id="repo" placeholder="Repository Name" class="form-control mb-2" required />
+        <input type="text" id="branch" placeholder="Branch (default: main)" class="form-control mb-2" />
+        <label for="since">Since:</label>
+        <input type="date" id="since" class="form-control mb-2" />
+        <label for="until">Until:</label>
+        <input type="date" id="until" class="form-control mb-3" />
+        <button type="submit" class="btn btn-primary">Fetch Commits</button>
+      </form>
+      <div id="loading" style="display:none;">Loading...</div>
+      <ul id="commitList" class="list-group"></ul>
+    </div>
+
+    <div id="profileContent" style="display:none;">
+      <h2>User Profile</h2>
+      <div id="profileInfo" class="text-center">
+        <p>Enter a GitHub username in the dashboard to view profile here.</p>
+      </div>
+    </div>
+
+    <div id="repositoriesContent" style="display:none;">
+      <h2>Repositories</h2>
+      <div id="repoList">
+        <p>Enter a GitHub username in the Dashboard and click Repositories tab.</p>
+      </div>
+    </div>
+
+   <!-- Settings Content -->
+<br>
+<div id="settingsContent" style="display:none;">
+  <h2>Settings</h2>
+
+  <form id="settingsForm">
+    <div class="mb-3">
+      <label for="themeSelect" class="form-label">Theme</label>
+      <select class="form-select" id="themeSelect">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label for="defaultBranch" class="form-label">Default Branch</label>
+      <input type="text" class="form-control" id="defaultBranch" placeholder="e.g., main or master" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Settings</button>
+    <span id="settingsStatus" class="ms-3 text-success" style="display: none;">Saved!</span>
+  </form>
+</div>
+
+<!-- About Content-->
+      <div id="aboutContent" style="display:none;">
+      <div class="container py-5">
+        <div class="text-center mb-5">
+          <h2 class="display-4 mb-3">About GitHub Commit Tracker</h2>
+          <p class="lead text-muted">A powerful tool to visualize and track your GitHub commit history</p>
+        </div>
+
+        <div class="row mb-5">
+          <div class="col-md-4 mb-4">
+            <div class="card feature-card h-100 p-4">
+              <div class="card-body text-center">
+                <div class="feature-icon mb-3">
+                  <i class="fas fa-code-branch"></i>
+                </div>
+                <h4>Commit Tracking</h4>
+                <p>Easily track commits across branches with detailed information including author, date, and changed files.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-4">
+            <div class="card feature-card h-100 p-4">
+              <div class="card-body text-center">
+                <div class="feature-icon mb-3">
+                  <i class="fas fa-user-circle"></i>
+                </div>
+                <h4>User Profiles</h4>
+                <p>View comprehensive GitHub user profiles including avatars, bio, and repository statistics.</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-4">
+            <div class="card feature-card h-100 p-4">
+              <div class="card-body text-center">
+                <div class="feature-icon mb-3">
+                  <i class="fas fa-cog"></i>
+                </div>
+                <h4>Customizable</h4>
+                <p>Personalize your experience with theme options and default branch settings.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="row mb-5">
+          <div class="col-lg-8 mx-auto">
+            <div id="aboutCarousel" class="carousel slide about-carousel" data-bs-ride="carousel">
+              <div class="carousel-indicators">
+                <button type="button" data-bs-target="#aboutCarousel" data-bs-slide-to="0" class="active"></button>
+                <button type="button" data-bs-target="#aboutCarousel" data-bs-slide-to="1"></button>
+                <button type="button" data-bs-target="#aboutCarousel" data-bs-slide-to="2"></button>
+              </div>
+              <div class="carousel-inner rounded-3">
+                <div class="carousel-item active">
+                  <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" class="d-block w-100" alt="Code Example">
+                  <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded-3">
+                    <h5>Track Your Commits</h5>
+                    <p>View detailed commit history with author information</p>
+                  </div>
+                </div>
+                <div class="carousel-item">
+                  <img src="https://images.unsplash.com/photo-1623479322729-28b25c16b011?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" class="d-block w-100" alt="Repository View">
+                  <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded-3">
+                    <h5>Repository Insights</h5>
+                    <p>Get comprehensive repository statistics</p>
+                  </div>
+                </div>
+                <div class="carousel-item">
+                  <img src="https://images.unsplash.com/photo-1547658719-da2b51169166?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80" class="d-block w-100" alt="Settings Panel">
+                  <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-75 rounded-3">
+                    <h5>Customizable Interface</h5>
+                    <p>Choose between light and dark themes</p>
+                  </div>
+                </div>
+              </div>
+              <button class="carousel-control-prev" type="button" data-bs-target="#aboutCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
+              </button>
+              <button class="carousel-control-next" type="button" data-bs-target="#aboutCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="tech-stack-section">
+          <div class="container">
+            <h2 class="section-heading">Our Powerful Tech Stack</h2>
+            <p class="section-subheading">Carefully selected technologies that power our application</p>
+
+            <div class="tech-stack-grid">
+              <div class="tech-category">
+                <div class="category-header">
+                  <i class="fas fa-server"></i>
+                  <h3>Backend</h3>
+                </div>
+                <div class="tech-items">
+                  <div class="tech-item">
+                    <div class="tech-icon">
+                      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" alt="Python">
+                    </div>
+                    <div class="tech-info">
+                      <h4>Python</h4>
+                      <p>Core programming language</p>
+                    </div>
+                  </div>
+                  <div class="tech-item">
+                    <div class="tech-icon">
+                      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/django/django-plain.svg" alt="Django">
+                    </div>
+                    <div class="tech-info">
+                      <h4>Django</h4>
+                      <p>High-level web framework</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tech-category">
+                <div class="category-header">
+                  <i class="fas fa-desktop"></i>
+                  <h3>Frontend</h3>
+                </div>
+                <div class="tech-items">
+                  <div class="tech-item">
+                    <div class="tech-icon">
+                      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" alt="JavaScript">
+                    </div>
+                    <div class="tech-info">
+                      <h4>JavaScript</h4>
+                      <p>Interactive web functionality</p>
+                    </div>
+                  </div>
+                  <div class="tech-item">
+                    <div class="tech-icon">
+                      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/bootstrap/bootstrap-original.svg" alt="Bootstrap">
+                    </div>
+                    <div class="tech-info">
+                      <h4>Bootstrap 5</h4>
+                      <p>Responsive design framework</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tech-category">
+                <div class="category-header">
+                  <i class="fas fa-robot"></i>
+                  <h3>AI & Services</h3>
+                </div>
+                <div class="tech-items">
+                  <div class="tech-item">
+                    <div class="tech-icon">
+                      <img src="images/7.jpg" alt="Botpress" style="filter: none">
+                    </div>
+                    <div class="tech-info">
+                      <h4>Botpress</h4>
+                      <p>Conversational AI platform</p>
+                    </div>
+                  </div>
+                  <div class="tech-item">
+                    <div class="tech-icon">
+                      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" alt="GitHub">
+                    </div>
+                    <div class="tech-info">
+                      <h4>GitHub API</h4>
+                      <p>Commit data integration</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="tech-category">
+                <div class="category-header">
+                  <i class="fas fa-code"></i>
+                  <h3>Web Fundamentals</h3>
+                </div>
+                <div class="tech-items">
+                  <div class="tech-item">
+                    <div class="tech-icon">
+                      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg" alt="HTML5">
+                    </div>
+                    <div class="tech-info">
+                      <h4>HTML5</h4>
+                      <p>Markup structure</p>
+                    </div>
+                  </div>
+                  <div class="tech-item">
+                    <div class="tech-icon">
+                      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg" alt="CSS3">
+                    </div>
+                    <div class="tech-info">
+                      <h4>CSS3</h4>
+                      <p>Styling and layout</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="helpContent" style="display:none;">
+      <div class="container py-4">
+        <h2 class="mb-4 text-center">Help & Support</h2>
+        <div class="row">
+          <div class="col-md-6">
+            <h5>Getting Started</h5>
+            <p>Enter a GitHub username and repository on the Dashboard to start tracking commits easily.</p>
+            <ul>
+              <li>Fill in the GitHub username and repo name.</li>
+              <li>Optionally, specify the branch (default is <code>main</code>).</li>
+              <li>Use date filters to narrow commit history.</li>
+              <li>Click **Fetch Commits** to see the commit list.</li>
+            </ul>
+
+            <h5>Navigation Tips</h5>
+            <ul>
+              <li>Profile: View detailed user info and avatar.</li>
+              <li>Repositories:Browse user's repositories sorted by recent updates.</li>
+              <li>Settings: Customize theme and default branch for quick access.</li>
+              <li>About: Learn more about the app features.</li>
+            </ul>
+
+            <h5>Need More Help?</h5>
+            <p>Check out the official <a href="https://docs.github.com/en/rest" target="_blank" rel="noopener">GitHub API Documentation</a> for advanced queries.</p>
+            <p>If you encounter issues or bugs, feel free to open an issue on the <a href="https://github.com/your-repo-link" target="_blank" rel="noopener">project's GitHub repository</a>.</p>
+          </div>
+
+          <div class="col-md-6">
+            <div id="helpCarousel" class="carousel slide shadow rounded" data-bs-ride="carousel" style="max-width: 100%; border: 1px solid #ddd;">
+              <div class="carousel-inner">
+                <div class="carousel-item active">
+                  <img src="images/6.jpg" class="d-block w-100" alt="Dashboard View" />
+                  <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
+                    <h6>Dashboard: Enter user and repo info here</h6>
+                  </div>
+                </div>
+                <div class="carousel-item">
+                  <img src="images/3.jpg" class="d-block w-100" alt="Commit List View" />
+                  <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
+                    <h6>Commit List: View commit messages with author avatars</h6>
+                  </div>
+                </div>
+                <div class="carousel-item">
+                  <img src="images/5.jpg" class="d-block w-100" alt="Profile View" />
+                  <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
+                    <h6>Profile: Check GitHub user details and bio</h6>
+                  </div>
+                </div>
+                <div class="carousel-item">
+                  <img src="images/1.jpg" class="d-block w-100" alt="Settings Panel" />
+                  <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded p-2">
+                    <h6>Settings: Customize theme and default branch</h6>
+                  </div>
+                </div>
+              </div>
+
+              <button class="carousel-control-prev" type="button" data-bs-target="#helpCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+              </button>
+              <button class="carousel-control-next" type="button" data-bs-target="#helpCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+              </button>
+
+            </div>
+            <br><br><br><br>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const content = document.getElementById('content');
+    const sidebarToggle = document.getElementById('sidebarToggle');
+
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+      content.classList.toggle('expanded');
+    });
+
+    const dashboardLink = document.getElementById('dashboardLink');
+    const profileLink = document.getElementById('profileLink');
+    const repositoriesLink = document.getElementById('repositoriesLink');
+    const settingsLink = document.getElementById('settingsLink');
+    const helpLink = document.getElementById('helpLink');
+    const aboutLink = document.getElementById('aboutLink');
+
+    const dashboardContent = document.getElementById('dashboardContent');
+    const profileContent = document.getElementById('profileContent');
+    const repositoriesContent = document.getElementById('repositoriesContent');
+    const settingsContent = document.getElementById('settingsContent');
+    const helpContent = document.getElementById('helpContent');
+    const aboutContent = document.getElementById('aboutContent');
+
+    function clearActiveLinks() {
+      [dashboardLink, profileLink, repositoriesLink, settingsLink, helpLink, aboutLink].forEach(link => {
+        link.classList.remove('active');
+      });
+    }
+
+    function hideAllContent() {
+      [dashboardContent, profileContent, repositoriesContent, settingsContent, helpContent, aboutContent].forEach(section => {
+        section.style.display = 'none';
+      });
+    }
+
+    function showPage(contentDiv, link) {
+      hideAllContent();
+      contentDiv.style.display = 'block';
+      clearActiveLinks();
+      link.classList.add('active');
+    }
+
+    dashboardLink.addEventListener('click', e => {
+      e.preventDefault();
+      showPage(dashboardContent, dashboardLink);
+    });
+
+    profileLink.addEventListener('click', e => {
+      e.preventDefault();
+      showPage(profileContent, profileLink);
+      loadProfile();
+    });
+
+    repositoriesLink.addEventListener('click', e => {
+      e.preventDefault();
+      showPage(repositoriesContent, repositoriesLink);
+      loadRepositories();
+    });
+
+    settingsLink.addEventListener('click', e => {
+      e.preventDefault();
+      showPage(settingsContent, settingsLink);
+    });
+
+    helpLink.addEventListener('click', e => {
+      e.preventDefault();
+      showPage(helpContent, helpLink);
+    });
+
+    aboutLink.addEventListener('click', e => {
+      e.preventDefault();
+      showPage(aboutContent, aboutLink);
+    });
+
+    function loadProfile() {
+      const usernameInput = document.getElementById('username').value.trim();
+      const profileInfo = document.getElementById('profileInfo');
+
+      if (!usernameInput) {
+        profileInfo.innerHTML = `<p class="text-danger">Please enter a GitHub username in the Dashboard first.</p>`;
+        return;
+      }
+
+      profileInfo.innerHTML = 'Loading profile...';
+
+      fetch(`https://api.github.com/users/${usernameInput}`)
+        .then(res => {
+          if (!res.ok) throw new Error('User not found');
+          return res.json();
+        })
+        .then(user => {
+          profileInfo.innerHTML = `
+            <img src="${user.avatar_url}" alt="Avatar" class="profile-avatar mb-3" />
+            <h3>${user.login}</h3>
+            <p>${user.bio || 'No bio available'}</p>
+            <p><strong>Public Repositories:</strong> ${user.public_repos}</p>
+            <p><strong>Followers:</strong> ${user.followers}</p>
+            <p><a href="${user.html_url}" target="_blank" rel="noopener">View on GitHub</a></p>
+          `;
+        })
+        .catch(err => {
+          profileInfo.innerHTML = `<p class="text-danger">Error loading profile: ${err.message}</p>`;
+        });
+    }
+
+    function loadRepositories() {
+      const usernameInput = document.getElementById('username').value.trim();
+      const repoListDiv = document.getElementById('repoList');
+
+      if (!usernameInput) {
+        repoListDiv.innerHTML = `<p class="text-danger">Please enter a GitHub username in the Dashboard first.</p>`;
+        return;
+      }
+
+      repoListDiv.innerHTML = 'Loading repositories...';
+
+      fetch(`https://api.github.com/users/${usernameInput}/repos?sort=updated&per_page=50`)
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch repositories');
+          return res.json();
+        })
+        .then(repos => {
+          if (repos.length === 0) {
+            repoListDiv.innerHTML = '<p>No repositories found for this user.</p>';
+            return;
+          }
+
+          const listHTML = repos.map(repo => `
+            <div class="card mb-3">
+              <div class="card-body">
+                <h5 class="card-title">
+                  <a href="${repo.html_url}" target="_blank" rel="noopener">${repo.name}</a>
+                </h5>
+                <p class="card-text">${repo.description || 'No description'}</p>
+                <p class="card-text">
+                  <small class="text-muted">⭐ ${repo.stargazers_count} | ${repo.language || 'Unknown language'}</small>
+                </p>
+              </div>
+            </div>
+          `).join('');
+
+          repoListDiv.innerHTML = listHTML;
+        })
+        .catch(err => {
+          repoListDiv.innerHTML = `<p class="text-danger">Error: ${err.message}</p>`;
+        });
+    }
+
+    const commitForm = document.getElementById("commitForm");
+    const commitList = document.getElementById("commitList");
+    const loading = document.getElementById("loading");
+
+    let allCommits = [];
+
+    commitForm.addEventListener("submit", e => {
+      e.preventDefault();
+
+      const username = document.getElementById("username").value.trim();
+      const repo = document.getElementById("repo").value.trim();
+      const branchInput = document.getElementById("branch").value.trim();
+      const branch = branchInput || 'main';
+      const since = document.getElementById("since").value;
+      const until = document.getElementById("until").value;
+
+      commitList.innerHTML = "";
+      loading.style.display = "block";
+
+      const params = new URLSearchParams({ username, repo, branch, since, until });
+      fetch(`/get_commits/?${params.toString()}`)
+        .then(res => res.json())
+        .then(data => {
+          loading.style.display = "none";
+          if (data.error) {
+            commitList.innerHTML = `<li class="list-group-item text-danger">${data.error}</li>`;
+            allCommits = [];
+            return;
+          }
+          if (data.commits.length === 0) {
+            commitList.innerHTML = `<li class="list-group-item">No commits found.</li>`;
+            allCommits = [];
+            return;
+          }
+          allCommits = data.commits;
+          renderCommits(allCommits);
+        })
+        .catch(() => {
+          loading.style.display = "none";
+          commitList.innerHTML = `<li class="list-group-item text-danger">Failed to fetch commits</li>`;
+          allCommits = [];
+        });
+    });
+    fetch("https://debarpanroy2006.github.io/api/commits/?username=debarpanroy2006&repo=Github_Commit_history_tracker")
+  .then(response => response.json())
+  .then(data => {
+    const formattedCommits = data.map(commit => ({
+      message: commit.commit.message,
+      author: commit.commit.author.name,
+      date: new Date(commit.commit.author.date).toLocaleString(),
+      avatar_url: commit.author?.avatar_url || null,
+      files: [] // You could fetch commit details one-by-one if you need files
+    }));
+    renderCommits(formattedCommits);
+  })
+  .catch(error => {
+    console.error("Error fetching commits:", error);
+    alert("Failed to fetch commits.");
+  });
+
+    function renderCommits(commits) {
+      commitList.innerHTML = "";
+      commits.forEach(({ message, author, date, avatar_url, files }) => {
+        const li = document.createElement("li");
+        li.className = "list-group-item d-flex align-items-center commit-item";
+
+        const img = document.createElement("img");
+        img.src = avatar_url || "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png";
+        img.alt = author;
+        img.className = "avatar";
+
+        const text = document.createElement("div");
+        text.innerHTML = `
+          <strong>${message}</strong><br/>
+          <small>${author} (${date})</small><br/>
+          <small>Files: ${files.join(', ')}</small>
+        `;
+
+        li.appendChild(img);
+        li.appendChild(text);
+        commitList.appendChild(li);
+      });
+    }
+    // Load settings from localStorage
+function loadSettings() {
+  const theme = localStorage.getItem('theme') || 'light';
+  const defaultBranch = localStorage.getItem('defaultBranch') || '';
+
+  document.getElementById('themeSelect').value = theme;
+  document.getElementById('defaultBranch').value = defaultBranch;
+
+  applyTheme(theme);
+}
+
+
+  // Settings functionality
+  const settingsForm = document.getElementById("settingsForm");
+  const themeSelect = document.getElementById("themeSelect");
+  const defaultBranchInput = document.getElementById("defaultBranch");
+  const settingsStatus = document.getElementById("settingsStatus");
+
+  // Load saved settings (if any)
+  window.addEventListener("DOMContentLoaded", () => {
+    const savedTheme = localStorage.getItem("theme");
+    const savedBranch = localStorage.getItem("defaultBranch");
+
+    if (savedTheme) {
+      themeSelect.value = savedTheme;
+      applyTheme(savedTheme);
+    }
+
+    if (savedBranch) {
+      defaultBranchInput.value = savedBranch;
+    }
+  });
+
+  // Save settings
+  settingsForm.addEventListener("submit", e => {
+    e.preventDefault();
+
+    const theme = themeSelect.value;
+    const defaultBranch = defaultBranchInput.value.trim();
+
+    localStorage.setItem("theme", theme);
+    localStorage.setItem("defaultBranch", defaultBranch);
+
+    applyTheme(theme);
+
+    settingsStatus.style.display = "inline";
+    setTimeout(() => {
+      settingsStatus.style.display = "none";
+    }, 2000);
+  });
+
+  // Apply selected theme
+  function applyTheme(theme) {
+    if (theme === "dark") {
+      document.body.classList.add("bg-dark", "text-light");
+      document.body.classList.remove("bg-light", "text-dark");
+      document.getElementById("content").style.backgroundColor = "#343a40";
+    } else {
+      document.body.classList.remove("bg-dark", "text-light");
+      document.body.classList.add("bg-light", "text-dark");
+      document.getElementById("content").style.backgroundColor = "#fff";
+    }
+  }
+
+
+// Hook into Settings navigation
+settingsLink.addEventListener('click', e => {
+  e.preventDefault();
+  showPage(settingsContent, settingsLink);
+  loadSettings();
+});
+const savedBranch = localStorage.getItem('defaultBranch') || 'main';
+const branch = branchInput || savedBranch;
+const $ = id => document.getElementById(id);
+
+
+
+
+
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <footer>
+    Powered by <strong>gitTracker.Co.Ltd</strong> &nbsp;|&nbsp; &copy; 2025 Debarpan Roy
+  </footer>
+  <script src="https://cdn.botpress.cloud/webchat/v2.3/inject.js"></script>
+<script src="https://files.bpcontent.cloud/2025/03/22/14/20250322143833-WLKCAUV0.js"></script>
+
+</body>
+</html>  
